@@ -1,33 +1,36 @@
 const pool = require('../db');
 const userRepo = require('../repositories/userRepository');
 
-exports.getUsers = async(req, res) => {
+exports.getUsers = async(req, res, next) => {
     try {
         const users = await userRepo.getAllUsers();
         res.json(users);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'error fetching users' });
+        next(err)
     }
 }
-exports.createUser = async(req, res) => {
+exports.createUser = async(req, res, next) => {
     try {
         const { name, email } = req.body;
         const createdUser = await userRepo.createUser(name, email);
-        res.status(201).json({ message: 'a new user has been added!', user: createdUser })
+        res.status(201).json({ message: 'a new user has been added!', user: createdUser });
 
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "no user has been added!" })
+        next(err);
     }
 
 }
 
-exports.updateUser = async(req, res) => {
+exports.updateUser = async(req, res, next) => {
     try {
         const id = parseInt(req.params.id);
         const { name, email } = req.body;
         const updatedUser = await userRepo.updateUser(id, name, email);
+        if (!updatedUser) {
+            const error = new Error('User Not Found!');
+            error.statusCode = 404;
+            return next(error);
+        }
         res.json({
             message: 'User updated successfully',
             user: updatedUser
@@ -35,8 +38,7 @@ exports.updateUser = async(req, res) => {
 
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'no user updated' });
+        next(err);
 
     }
 
@@ -44,17 +46,20 @@ exports.updateUser = async(req, res) => {
 
 
 // 4. deleteUser (DELETE)
-exports.deleteUser = async(req, res) => {
+exports.deleteUser = async(req, res, next) => {
     try {
         const id = parseInt(req.params.id);
 
         const deletedUser = await userRepo.deleteUser(id);
         if (!deletedUser) {
-            return res.status(404).json({ message: 'User not found' });
+            const error = new Error('User Not Found!');
+            error.statusCode = 404;
+            next(error);
+        } else {
+            res.json({ message: 'User deleted successfully what?', user: deletedUser });
+
         }
-        res.json({ message: 'User deleted successfully', user: deletedUser });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Error deleting user' });
+        next(err);
     }
 };

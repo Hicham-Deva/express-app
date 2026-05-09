@@ -16,8 +16,9 @@ const updateUser = async(id, name, email) => {
     return result.rows[0];
 }
 const deleteUser = async(id) => {
-    const queryText = 'DELETE FROM users WHERE id=$1 RETURNING *';
     console.log(typeof(id));
+    const queryText = 'DELETE FROM users WHERE id=$1 RETURNING *';
+
     const result = await pool.query(queryText, [id]);
     return result.rows[0];
 }
