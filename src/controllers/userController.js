@@ -1,9 +1,10 @@
 const pool = require('../db');
+const userRepo = require('../repositories/userRepository');
 
 exports.getUsers = async(req, res) => {
     try {
-        const result = await pool.query("select * from users order by created_at desc");
-        res.json(result.rows);
+        const users = await userRepo.getAllUsers();
+        res.json(users);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'error fetching users' });
@@ -12,9 +13,8 @@ exports.getUsers = async(req, res) => {
 exports.createUser = async(req, res) => {
     try {
         const { name, email } = req.body;
-        const queryText = 'insert into users (name,email) values($1,$2) returning *';
-        const result = await pool.query(queryText, [name, email]);
-        res.status(201).json({ message: 'a new user has been added!', user: result.rows[0] })
+        const createdUser = await userRepo.createUser(name, email);
+        res.status(201).json({ message: 'a new user has been added!', user: createdUser })
 
     } catch (err) {
         console.error(err.message);
@@ -26,13 +26,11 @@ exports.createUser = async(req, res) => {
 exports.updateUser = async(req, res) => {
     try {
         const id = parseInt(req.params.id);
-        console.log(id)
         const { name, email } = req.body;
-        const queryText = 'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *';
-        const result = await pool.query(queryText, [name, email, id]);
+        const updatedUser = await userRepo.updateUser(id, name, email);
         res.json({
             message: 'User updated successfully',
-            user: result.rows[0]
+            user: updatedUser
         });
 
 
@@ -50,15 +48,11 @@ exports.deleteUser = async(req, res) => {
     try {
         const id = parseInt(req.params.id);
 
-        const queryText = 'DELETE FROM users WHERE id = $1 RETURNING *';
-
-        const result = await pool.query(queryText, [id]);
-
-        if (result.rows.length === 0) {
+        const deletedUser = await userRepo.deleteUser(id);
+        if (!deletedUser) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        res.json({ message: 'User deleted successfully' });
+        res.json({ message: 'User deleted successfully', user: deletedUser });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Error deleting user' });
