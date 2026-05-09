@@ -1,5 +1,6 @@
 const pool = require('../db');
 const userRepo = require('../repositories/userRepository');
+const bcrypt = require('bcrypt');
 
 exports.getUsers = async(req, res, next) => {
     try {
@@ -11,8 +12,12 @@ exports.getUsers = async(req, res, next) => {
 }
 exports.createUser = async(req, res, next) => {
     try {
-        const { name, email } = req.body;
-        const createdUser = await userRepo.createUser(name, email);
+        const { name, email, password } = req.body;
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        console.log('Plain Password:', password);
+        console.log('Hashed Password:', hashedPassword);
+        const createdUser = await userRepo.createUser(name, email, hashedPassword);
         res.status(201).json({ message: 'a new user has been added!', user: createdUser });
 
     } catch (err) {

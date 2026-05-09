@@ -1,5 +1,6 @@
 const express = require('express');
 const userRoutes = require('./src/routes/userRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
@@ -9,11 +10,13 @@ app.use((req, res, next) => {
     console.log(`${req.method} request to ${req.url}`);
     next();
 })
+
 app.use('/users', userRoutes);
+app.use('/auth', authRoutes);
+
 app.use((req, res, next) => {
     res.status(404).json({ message: 'bad url' });
 })
-
 app.use(errorHandler);
 
 const port = 3000;
